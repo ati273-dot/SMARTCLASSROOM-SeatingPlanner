@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SMART CLASSROOM – Seating Planner</title>
+<style>
+:root{--navy:#123968;--blue:#2563eb;--sky:#eaf4ff;--gold:#f7c948;--ink:#18324f;--muted:#64748b;--line:#d7e3f1}
+*{box-sizing:border-box}body{margin:0;background:#f3f7fc;color:var(--ink);font-family:Arial,Helvetica,sans-serif}
+header{background:linear-gradient(120deg,#10345f,#2466a5);color:white;padding:22px 18px;text-align:center}
+header h1{margin:0;font-size:clamp(22px,4vw,32px);letter-spacing:.5px}header p{margin:7px 0 0;color:#e2efff}
+main{max-width:1200px;margin:20px auto;padding:0 14px;display:grid;grid-template-columns:300px 1fr;gap:16px}
+.panel,.workspace{background:white;border:1px solid var(--line);border-radius:16px;box-shadow:0 5px 20px #17365d0d}
+.panel{padding:17px;height:max-content}.panel h2{font-size:17px;margin:0 0 14px;color:var(--navy)}
+label{display:block;font-size:13px;font-weight:700;margin:12px 0 5px}
+input,select{width:100%;padding:10px;border:1px solid #cbd8e8;border-radius:9px;font:inherit;color:var(--ink);background:white}
+button{border:0;border-radius:10px;padding:10px 12px;font-weight:700;cursor:pointer;background:var(--blue);color:white}
+button:hover{filter:brightness(.95)}button.secondary{background:#e8f0fa;color:var(--navy);border:1px solid #cbd8e8}
+button.danger{background:#fff0f0;color:#a52a2a;border:1px solid #f2caca}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.actions .wide{grid-column:1/-1}
+.note{font-size:12px;line-height:1.5;color:var(--muted);margin:12px 0}
+.stats{display:flex;gap:8px;margin-top:12px}.stat{flex:1;background:#f1f6fc;border-radius:10px;padding:10px}.stat b{display:block;font-size:20px;color:var(--navy)}.stat span{font-size:11px;color:var(--muted)}
+.workspace{padding:14px;min-width:0}.toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.toolbar strong{color:var(--navy)}.toolbar small{color:var(--muted)}
+.room-wrap{overflow:auto;background:#f7faff;border:1px dashed #b8cbe1;border-radius:12px;padding:12px;max-width:100%;-webkit-overflow-scrolling:touch}
+.room{position:relative;width:900px;height:600px;max-width:none;margin:0;background:#fff;border:3px solid #7896b7;border-radius:8px;overflow:hidden;background-image:linear-gradient(#edf3fa 1px,transparent 1px),linear-gradient(90deg,#edf3fa 1px,transparent 1px);background-size:25px 25px;touch-action:none}
+.front-label{position:absolute;left:50%;top:10px;transform:translateX(-50%);padding:8px 32px;background:#173f6d;color:white;border-radius:6px;font-size:13px;font-weight:bold;letter-spacing:1px;pointer-events:none}
+.door{position:absolute;right:0;bottom:65px;border:2px solid #d49b36;border-right:0;border-radius:8px 0 0 8px;padding:9px 5px;background:#fff8e7;color:#865b16;font-size:11px;writing-mode:vertical-rl;pointer-events:none}
+.teacher{position:absolute;top:65px;left:50%;transform:translateX(-50%);background:#fff0c2;border:1px solid #e5bd55;color:#785515;border-radius:7px;padding:7px 18px;font-size:12px;pointer-events:none}
+.seat{position:absolute;width:66px;height:48px;border:2px solid #6c9bd0;border-radius:8px;background:#dcecff;color:#153c67;display:flex;align-items:center;justify-content:center;flex-direction:column;font-weight:bold;cursor:grab;user-select:none;touch-action:none;box-shadow:0 2px 4px #163b641a}
+.seat:active{cursor:grabbing}.seat.selected{outline:3px solid var(--gold);outline-offset:2px;z-index:5}.seat .num{font-size:14px}.seat .tag{font-size:9px;font-weight:normal;color:#52708f}
+.seat.dragging{opacity:.8;z-index:20;box-shadow:0 8px 18px #17365d40}
+.furniture{position:absolute;z-index:3;display:flex;align-items:center;justify-content:center;user-select:none;touch-action:none;cursor:grab;box-shadow:0 2px 5px #17365d20;font-weight:bold}
+.furniture:active{cursor:grabbing}.furniture.selected{outline:3px solid var(--gold);outline-offset:2px}.furniture.dragging{opacity:.82;z-index:30;box-shadow:0 8px 18px #17365d40}
+.teacher{left:calc(50% - 65px);top:65px;transform:none;width:130px;height:38px;background:#fff0c2;border:1px solid #e5bd55;color:#785515;border-radius:7px;padding:4px 8px;font-size:12px;pointer-events:auto}
+.door{right:0;bottom:65px;top:auto;left:auto;width:30px;height:85px;border:2px solid #d49b36;border-right:0;border-radius:8px 0 0 8px;padding:5px;background:#fff8e7;color:#865b16;font-size:11px;writing-mode:vertical-rl;pointer-events:auto}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--muted)}.dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;background:#dcecff;border:1px solid #6c9bd0}
+footer{text-align:center;padding:16px;color:#718096;font-size:12px}
+@media(max-width:850px){main{grid-template-columns:1fr;margin:10px auto;padding:0 8px;gap:10px}.panel{order:2;padding:13px}.workspace{order:1;padding:10px}.room-wrap{padding:8px}.room{margin:0}.toolbar small{font-size:11px}}
+</style>
+</head>
+<body>
+<header><h1>SMART CLASSROOM</h1><p>Seating Planner · Atur posisi kursi dengan seret dan lepas</p></header>
+<main>
+<section class="panel">
+<h2>Pengaturan Rancangan</h2>
+<label for="layoutName">Nama rancangan</label><input id="layoutName" value="Rancangan Kelas Saya" maxlength="60">
+<label for="studentCount">Jumlah kursi</label><input id="studentCount" type="number" min="1" max="60" value="36">
+<label for="roomW">Panjang kelas (meter)</label><input id="roomW" type="number" min="3" max="20" step="0.5" value="9">
+<label for="roomH">Lebar kelas (meter)</label><input id="roomH" type="number" min="3" max="15" step="0.5" value="6">
+<div class="actions"><button class="secondary wide" id="applyRoom">Terapkan ukuran kelas</button></div>
+<label for="preset">Susunan awal</label>
+<select id="preset"><option value="grid">Baris / Klasikal</option><option value="groups">Diskusi kelompok</option><option value="u">Bentuk U</option><option value="rows2">Dua kolom panjang</option><option value="circle">Melingkar</option></select>
+<div class="actions">
+<button id="make">Buat / Atur Ulang</button><button class="secondary" id="add">+ Tambah kursi</button>
+<button class="secondary" id="remove">Hapus kursi terpilih</button><button class="secondary" id="reset">Kembali ke awal</button>
+</div>
+<div class="stats"><div class="stat"><b id="seatTotal">36</b><span>Total kursi</span></div><div class="stat"><b id="selectedNo">–</b><span>Kursi dipilih</span></div></div>
+<h2 style="margin-top:20px">Simpan & Bagikan</h2>
+<div class="actions">
+<button class="wide" id="saveJson">Simpan rancangan (JSON)</button>
+<button class="secondary" id="loadJson">Buka rancangan</button><button class="secondary" id="savePng">Unduh denah (PNG)</button>
+<button class="secondary wide" id="print">Cetak denah</button>
+</div>
+<input id="fileInput" type="file" accept=".json,application/json" hidden>
+<p class="note">Perubahan tersimpan otomatis di browser perangkat ini. Untuk menyimpan di folder/perangkat lain, unduh file JSON. File tersebut dapat dibuka kembali melalui tombol “Buka rancangan”. Denah PNG cocok untuk dimasukkan ke laporan proyek.</p>
+<div class="note"><b>Petunjuk:</b> Klik kursi, meja guru, atau pintu untuk memilih. Seret untuk memindahkan. Gunakan tombol Putar -15° / +15° untuk mengatur arah objek terpilih. Pada ponsel, sentuh dan geser.</div>
+</section>
+<section class="workspace">
+<div class="toolbar"><strong id="boardTitle">Denah Ruang Kelas</strong><small>Geser kursi ke posisi mana saja di dalam area kelas</small></div>
+<div class="room-wrap" id="roomWrap"><div class="room" id="room" aria-label="Area denah kelas">
+<div class="front-label">PAPAN TULIS</div><div class="furniture teacher" id="teacher" data-furniture="teacher">MEJA GURU</div><div class="furniture door" id="door" data-furniture="door">PINTU</div>
+</div></div>
+<div class="canvas-tools" style="margin-top:12px;padding:12px;background:#f1f6fc;border:1px solid #d7e4f3;border-radius:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px">
+  <div>
+    <label for="zoomRange" style="margin:0 0 6px;font-weight:700;color:#24496f">Perbesar / perkecil rancangan kelas</label>
+    <input id="zoomRange" type="range" min="50" max="150" step="5" value="100" style="width:100%">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><small id="zoomLabel">100%</small><button class="secondary" id="fitRoom">Sesuaikan layar</button></div>
+  </div>
+  <div class="rotate-panel">
+    <label style="margin:0 0 6px;font-weight:700;color:#24496f">Putar kursi terpilih</label>
+    <small style="display:block;color:#62758a;margin:0 0 8px">Pilih kursi pada denah, lalu tekan tombol putar.</small>
+    <div class="actions">
+      <button class="secondary" id="rotateLeft">↶ Putar -15°</button>
+      <button class="secondary" id="rotateRight">↷ Putar +15°</button>
+    </div>
+    <small id="rotateHint" style="display:block;color:#62758a;margin-top:7px">Belum ada kursi yang dipilih.</small>
+  </div>
+</div>
+<div class="legend"><span><i class="dot"></i>Kursi siswa</span><span>🟨 Garis kuning = kursi terpilih</span><span>🟧 Meja guru & pintu juga bisa digeser</span></div>
+</section>
+</main>
+<footer>SMART CLASSROOM · Proyek STEM Matematika Kelas XII · Kaidah Pencacahan</footer>
+<script>
+const room=document.getElementById('room'), $=id=>document.getElementById(id);
+const W=()=>parseFloat(room.style.width)||900,H=()=>parseFloat(room.style.height)||600;
+const PX_PER_M=100; let zoomFactor=1;
+let seats=[],selected=null,selectedType=null,drag=null,startState=[];
+let furniture={teacher:{x:W()/2-65,y:65},door:{x:W()-30,y:H()-150}};
+function setRoomDimensions(){
+ const length=Math.max(3,Math.min(20,parseFloat($('roomW').value)||9));
+ const width=Math.max(3,Math.min(15,parseFloat($('roomH').value)||6));
+ $('roomW').value=length; $('roomH').value=width;
+ const oldW=W(),oldH=H(),newW=length*PX_PER_M,newH=width*PX_PER_M;
+ room.style.width=newW+'px'; room.style.height=newH+'px';
+ // Keep objects in proportion when the classroom size changes.
+ const sx=newW/oldW,sy=newH/oldH;
+ seats.forEach(o=>{o.x*=sx;o.y*=sy;o.x=Math.max(0,Math.min(newW-66,o.x));o.y=Math.max(55,Math.min(newH-48,o.y));});
+ Object.keys(furniture).forEach(k=>{furniture[k].x*=sx;furniture[k].y*=sy;});
+ furniture.teacher.x=Math.max(0,Math.min(newW-130,furniture.teacher.x));
+ furniture.teacher.y=Math.max(0,Math.min(newH-38,furniture.teacher.y));
+ furniture.door.x=Math.max(0,Math.min(newW-30,furniture.door.x));
+ furniture.door.y=Math.max(0,Math.min(newH-85,furniture.door.y));
+ render(); applyZoom(); saveLocal();
+}
+function applyZoom(){
+ const base=Math.min(1,Math.max(.1,($('roomWrap').clientWidth-26)/W()));
+ zoomFactor=base*(Number($('zoomRange').value)||100)/100;
+ room.style.zoom=zoomFactor;
+ $('zoomLabel').textContent=Math.round(zoomFactor*100)+'% tampilan';
+}
+
+function saveLocal(){try{localStorage.setItem('smartClassroomLayout',JSON.stringify(getData()))}catch(e){}}
+function getData(){return {name:$('layoutName').value,widthMeters:W()/PX_PER_M,heightMeters:H()/PX_PER_M,seats:seats.map(s=>({...s})),furniture:JSON.parse(JSON.stringify(furniture))}}
+function updateStats(){$('seatTotal').textContent=seats.length;$('selectedNo').textContent=selected===null?'–':(selectedType==='seat'?(seats.find(s=>s.id===selected)?.n??'–'):(selected==='teacher'?'Meja':'Pintu'));$('boardTitle').textContent=$('layoutName').value||'Denah Ruang Kelas'}
+function selectSeat(id){selected=id;selectedType='seat';render()}
+function render(){
+ room.querySelectorAll('.seat').forEach(e=>e.remove());
+ ['teacher','door'].forEach(kind=>{let el=$(kind);if(el){el.style.left=furniture[kind].x+'px';el.style.top=furniture[kind].y+'px';el.style.right='auto';el.style.bottom='auto';}});
+ seats.forEach(s=>{let el=document.createElement('div');el.className='seat'+(s.id===selected?' selected':'');el.dataset.id=s.id;el.style.left=s.x+'px';el.style.top=s.y+'px';el.style.transform=`rotate(${s.rotation||0}deg)`;el.innerHTML='<span class="num">'+s.n+'</span><span class="tag">KURSI</span>';el.addEventListener('pointerdown',down);el.addEventListener('click',e=>{e.stopPropagation();selectSeat(s.id)});room.appendChild(el)});
+ updateStats();
+}
+function positions(n,preset){
+ let out=[],w=W(),h=H(),pad=35;
+ if(preset==='circle'){let cx=w/2,cy=h/2+15,rx=Math.min(w*.36,330),ry=Math.min(h*.34,210);for(let i=0;i<n;i++){let a=2*Math.PI*i/n-Math.PI/2;out.push({x:cx+Math.cos(a)*rx-33,y:cy+Math.sin(a)*ry-24})}}
+ else if(preset==='u'){let per=Math.ceil(n/3);for(let i=0;i<n;i++){let x,y;if(i<per){x=pad+i*(w-2*pad)/Math.max(1,per-1);y=h-105}else if(i<2*per){x=pad;y=h-105-(i-per+1)*Math.min(65,(h-190)/Math.max(1,per))}else{x=w-pad-66;y=h-105-(i-2*per+1)*Math.min(65,(h-190)/Math.max(1,per))}out.push({x,y})}}
+ else if(preset==='groups'){let cols=6,rows=Math.ceil(n/cols);for(let i=0;i<n;i++){let g=Math.floor(i/4),k=i%4;let gx=(g%3)*(w/3)+w/6,gy=Math.floor(g/3)*Math.min(170,(h-130)/Math.max(1,Math.ceil(n/12)))+125;out.push({x:gx+(k%2)*78-40,y:gy+Math.floor(k/2)*65-25})}}
+ else {let cols=preset==='rows2'?2:Math.max(2,Math.ceil(Math.sqrt(n*1.35))),rows=Math.ceil(n/cols),cw=(w-2*pad)/cols,ch=Math.min(75,(h-160)/Math.max(1,rows));for(let i=0;i<n;i++)out.push({x:pad+(i%cols)*cw+cw/2-33,y:100+Math.floor(i/cols)*ch})}
+ return out.map(p=>({x:Math.max(4,Math.min(w-70,p.x)),y:Math.max(65,Math.min(h-55,p.y))}));
+}
+function create(n,preset){let ps=positions(n,preset);seats=ps.map((p,i)=>({id:'s'+(i+1),n:i+1,...p}));selected=null;selectedType=null;render();saveLocal()}
+function down(e){e.preventDefault();let el=e.currentTarget,id=el.dataset.id;selected=id;selectedType='seat';let s=seats.find(a=>a.id===id);drag={type:'seat',id,el,ox:e.clientX-s.x,oy:e.clientY-s.y};el.classList.add('dragging');el.setPointerCapture(e.pointerId);renderStatsOnly()}
+function downFurniture(e){e.preventDefault();e.stopPropagation();let el=e.currentTarget,kind=el.dataset.furniture,p=furniture[kind];selected=kind;selectedType='furniture';drag={type:'furniture',id:kind,el,ox:e.clientX-p.x,oy:e.clientY-p.y};el.classList.add('dragging');el.setPointerCapture(e.pointerId)} 
+['teacher','door'].forEach(kind=>$(kind).addEventListener('pointerdown',downFurniture));
+function renderStatsOnly(){updateStats()}
+room.addEventListener('pointermove',e=>{if(!drag)return;let r=room.getBoundingClientRect(),x=e.clientX-r.left-drag.ox,y=e.clientY-r.top-drag.oy;
+ if(drag.type==='seat'){let s=seats.find(a=>a.id===drag.id);s.x=Math.max(0,Math.min(W()-66,x));s.y=Math.max(55,Math.min(H()-48,y));}
+ else {let kind=drag.id,el=drag.el;let maxX=W()-el.offsetWidth,maxY=H()-el.offsetHeight;furniture[kind].x=Math.max(0,Math.min(maxX,x));furniture[kind].y=Math.max(0,Math.min(maxY,y));}
+ drag.el.style.left=(drag.type==='seat'?seats.find(a=>a.id===drag.id).x:furniture[drag.id].x)+'px';drag.el.style.top=(drag.type==='seat'?seats.find(a=>a.id===drag.id).y:furniture[drag.id].y)+'px';});
+function endDrag(){if(!drag)return;drag=null;render();saveLocal()}
+room.addEventListener('pointerup',endDrag);room.addEventListener('pointercancel',endDrag);
+room.addEventListener('click',e=>{if(e.target===room){selected=null;selectedType=null;render()}});
+$('applyRoom').onclick=setRoomDimensions;
+$('zoomRange').oninput=applyZoom;
+$('fitRoom').onclick=()=>{$('zoomRange').value=100;applyZoom()};
+window.addEventListener('resize',applyZoom);
+$('make').onclick=()=>{let n=Math.max(1,Math.min(60,parseInt($('studentCount').value)||36));$('studentCount').value=n;create(n,$('preset').value)};
+$('add').onclick=()=>{let n=seats.length+1;seats.push({id:'s'+Date.now(),n,x:W()/2-33,y:H()/2-24});selected=seats.at(-1).id;render();saveLocal();$('studentCount').value=seats.length};
+$('remove').onclick=()=>{if(selected===null)return;seats=seats.filter(s=>s.id!==selected);selected=null;selectedType=null;seats.forEach((s,i)=>s.n=i+1);render();saveLocal();$('studentCount').value=seats.length};
+$('reset').onclick=()=>create(Math.max(1,Math.min(60,parseInt($('studentCount').value)||36)),$('preset').value);
+function rotateSelected(deg){
+ if(selected===null)return;
+ if(selectedType==='seat'){let obj=seats.find(s=>s.id===selected);if(obj)obj.rotation=((obj.rotation||0)+deg+360)%360;}
+ else if(selectedType==='furniture'&&furniture[selected]){furniture[selected].rotation=((furniture[selected].rotation||0)+deg+360)%360;}
+ render();saveLocal();
+}
+$('rotateLeft').onclick=()=>rotateSelected(-15);
+$('rotateRight').onclick=()=>rotateSelected(15);
+$('layoutName').oninput=()=>{updateStats();saveLocal()};
+$('saveJson').onclick=()=>{let blob=new Blob([JSON.stringify(getData(),null,2)],{type:'application/json'});download(blob,(($('layoutName').value||'rancangan').replace(/[^\w-]+/g,'_'))+'.json')};
+function download(blob,name){let a=document.createElement('a'),url=URL.createObjectURL(blob);a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+$('loadJson').onclick=()=>$('fileInput').click();
+$('fileInput').onchange=async e=>{let f=e.target.files[0];if(!f)return;try{let d=JSON.parse(await f.text());if(!Array.isArray(d.seats))throw Error();$('layoutName').value=d.name||'Rancangan';if(d.widthMeters&&d.heightMeters){$('roomW').value=d.widthMeters;$('roomH').value=d.heightMeters;room.style.width=(Number(d.widthMeters)*PX_PER_M)+'px';room.style.height=(Number(d.heightMeters)*PX_PER_M)+'px';}else if(d.width&&d.height){room.style.width=d.width+'px';room.style.height=d.height+'px';$('roomW').value=d.width/PX_PER_M;$('roomH').value=d.height/PX_PER_M;}seats=d.seats.map((s,i)=>({id:s.id||'s'+i,n:Number(s.n)||i+1,x:Number(s.x)||0,y:Number(s.y)||0,rotation:Number(s.rotation)||0}));if(d.furniture){furniture=d.furniture;['teacher','door'].forEach(k=>{furniture[k].rotation=Number(furniture[k].rotation)||0;});}selected=null;render();saveLocal();$('studentCount').value=seats.length}catch(err){alert('File rancangan tidak valid.')}e.target.value=''};
+function svgMarkup(){let w=W(),h=H(),esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><rect width="100%" height="100%" fill="#fff"/><rect x="1" y="1" width="${w-2}" height="${h-2}" rx="8" fill="none" stroke="#7896b7" stroke-width="3"/><rect x="${w/2-100}" y="10" width="200" height="35" rx="6" fill="#173f6d"/><text x="${w/2}" y="33" font-family="Arial" font-size="14" font-weight="bold" text-anchor="middle" fill="white">PAPAN TULIS</text><g transform="rotate(${furniture.teacher.rotation||0} ${furniture.teacher.x+65} ${furniture.teacher.y+19})"><rect x="${furniture.teacher.x}" y="${furniture.teacher.y}" width="130" height="38" rx="7" fill="#fff0c2" stroke="#e5bd55"/><text x="${furniture.teacher.x+65}" y="${furniture.teacher.y+23}" font-family="Arial" font-size="12" text-anchor="middle" fill="#785515">MEJA GURU</text></g><g transform="rotate(${furniture.door.rotation||0} ${furniture.door.x+15} ${furniture.door.y+42.5})"><rect x="${furniture.door.x}" y="${furniture.door.y}" width="30" height="85" rx="5" fill="#fff8e7" stroke="#d49b36"/><text x="${furniture.door.x+15}" y="${furniture.door.y+48}" font-family="Arial" font-size="11" text-anchor="middle" fill="#865b16">PINTU</text></g>${seats.map(s=>`<g transform="rotate(${s.rotation||0} ${s.x+33} ${s.y+24})"><rect x="${s.x}" y="${s.y}" width="66" height="48" rx="8" fill="#dcecff" stroke="#6c9bd0" stroke-width="2"/><text x="${s.x+33}" y="${s.y+21}" font-family="Arial" font-size="14" font-weight="bold" text-anchor="middle" fill="#153c67">${s.n}</text><text x="${s.x+33}" y="${s.y+36}" font-family="Arial" font-size="9" text-anchor="middle" fill="#52708f">KURSI</text></g>`).join('')}<text x="${w-12}" y="${h-20}" font-family="Arial" font-size="11" text-anchor="end" fill="#865b16">PINTU</text></svg>`}
+$('savePng').onclick=()=>{let svg=svgMarkup(),blob=new Blob([svg],{type:'image/svg+xml'}),url=URL.createObjectURL(blob),img=new Image();img.onload=()=>{let c=document.createElement('canvas');c.width=W()*2;c.height=H()*2;let x=c.getContext('2d');x.scale(2,2);x.drawImage(img,0,0);c.toBlob(b=>download(b,'denah-smart-classroom.png'));URL.revokeObjectURL(url)};img.src=url};
+$('print').onclick=()=>{let win=window.open('','_blank');if(!win){alert('Izinkan pop-up untuk mencetak denah.');return}win.document.write('<html><head><title>Denah SMART CLASSROOM</title></head><body style="font-family:Arial;text-align:center"><h2>'+($('layoutName').value||'Denah Kelas')+'</h2>'+svgMarkup()+'</body></html>');win.document.close();win.onload=()=>win.print()};
+try{let d=JSON.parse(localStorage.getItem('smartClassroomLayout'));if(d&&Array.isArray(d.seats)){$('layoutName').value=d.name||'Rancangan Kelas Saya';if(d.widthMeters&&d.heightMeters){$('roomW').value=d.widthMeters;$('roomH').value=d.heightMeters;room.style.width=(Number(d.widthMeters)*PX_PER_M)+'px';room.style.height=(Number(d.heightMeters)*PX_PER_M)+'px';}seats=d.seats;if(d.furniture)furniture=d.furniture;render();$('studentCount').value=seats.length}else create(36,'grid');applyZoom()}catch(e){create(36,'grid')}
+</script>
+</body></html>
